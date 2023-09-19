@@ -6,19 +6,13 @@ AWS.config.update({
 
 const  docClient = new AWS.DynamoDB.DocumentClient();
 
-// CRUD
+const tableName = 'users'
 
-// Create
-// Add item
-function addItem(id,username,password,role) {
+
+function addUser(user) {
     const params = {
-        TableName: 'users',
-        Item: {
-            id,
-            username,
-            password,
-            role
-        }
+        TableName: tableName,
+        Item: user
     };
 
     return docClient.put(params).promise(); //put is docClient's version of create()
