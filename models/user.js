@@ -1,13 +1,13 @@
 const uuid = require('uuid');
 
-class user{
+class User{
     //static ids = 1;
     constructor(username,password) {
-        this.id = uuid.v4();
+        this.user_id = uuid.v4();
         this.username = username;
         this.password = password;
         this.role = "employee"; //default role is employee
     }
 }
 
-module.exports = user;
+module.exports = User;

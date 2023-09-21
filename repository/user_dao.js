@@ -6,29 +6,40 @@ AWS.config.update({
 
 const  docClient = new AWS.DynamoDB.DocumentClient();
 
-const tableName = 'users'
-
+// function checkUserExists(username) {
+//     const params = {
+//         TableName: 'users',
+//         IndexName: 'username',
+//         KeyConditionExpression: 'username = :u',
+//         ExpressionAttributeValues: {
+//             ':u': username
+//         }
+//     }
+//     const result = docClient.query(params).promise();
+//     return result.Items.length > 0;
+// }
 
 function addUser(user) {
     const params = {
-        TableName: tableName,
+        TableName: 'users',
         Item: user
     };
-
     return docClient.put(params).promise(); //put is docClient's version of create()
-
 }
 
 // Read
-// retrieve by id
-function retrieveById(id) {
+// retrieve by username
+async function checkUserExists(username) {
     const params = {
-        key: {
-            "userId": id
+        TableName: 'users',
+        FilterExpression: 'username = :username',
+        ExpressionAttributeValues: {
+            ':username': username,
         }
     }
-
-    return docClient.get(params).promise();
+    const result = await docClient.scan(params).promise();
+    if(result.Items.length > 0) return true;
+    return false;
 }
 
 // retrieve by list
@@ -92,4 +103,4 @@ function deleteById(id) {
     }
 }
 
-module.exports = { addItem, retrieveById, retrieveList, retrieveListByCat, updateById};
+module.exports = { checkUserExists, addUser, retrieveList, retrieveListByCat, updateById};

@@ -1,4 +1,4 @@
-class ticket{
+class Ticket{
     constructor(amount, description) {
         this.creatorId;
         this.amount = amount;
