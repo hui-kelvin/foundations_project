@@ -22,7 +22,7 @@ jwt.verify = Promise.promisify(jwt.verify); // Turn jwt.verify into a function t
 
 // verify
 function verifyTokenAndReturnPayload(token){
-    return jwt.verify(token, 'thisisasecret');
+    return jwt.verify(token, 'thisisanothersecret');
 }
 
 module.exports = {
