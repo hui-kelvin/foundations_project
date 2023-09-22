@@ -29,7 +29,7 @@ function addUser(user) {
 
 // Read
 // retrieve by username
-async function checkUserExists(username) {
+async function checkUser(username) {
     const params = {
         TableName: 'users',
         FilterExpression: 'username = :username',
@@ -38,8 +38,8 @@ async function checkUserExists(username) {
         }
     }
     const result = await docClient.scan(params).promise();
-    if(result.Items.length > 0) return true;
-    return false;
+    console.log(result.Items[0]);
+    return result;
 }
 
 // retrieve by list
@@ -103,4 +103,4 @@ function deleteById(id) {
     }
 }
 
-module.exports = { checkUserExists, addUser, retrieveList, retrieveListByCat, updateById};
+module.exports = { checkUser, addUser, retrieveList, retrieveListByCat, updateById};
