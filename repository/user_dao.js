@@ -38,7 +38,6 @@ async function checkUser(username) {
         }
     }
     const result = await docClient.scan(params).promise();
-    console.log(result.Items[0]);
     return result;
 }
 

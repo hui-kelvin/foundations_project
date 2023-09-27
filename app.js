@@ -118,6 +118,71 @@ server.post('/submitTicket',validateTicketFields, async(req,res) => {
     }
 })
 
+server.patch('/process/:ticketId', async (req, res) => {
+    const ticket_id = req.params.ticketId;
+    //console.log(ticket_id);
+    const newStatus = (req.body.newStatus);
+    //console.log(newStatus)
+    const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
+    const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
+    try {
+        if(payload.role === 'manager'){
+            const ifProcessed = await ticketDao.checkProcessed(ticket_id);
+            //console.log(ifProcessed)
+            if(ifProcessed) {
+                res.statusCode = 400;
+                res.send({message: 'Ticket has already been processed'});
+            } else {
+                await ticketDao.processTicket(ticket_id, newStatus);
+                res.send({message: `Ticket ID: ${ticket_id} has been ${newStatus}`});
+            }
+        }else{
+            res.statusCode = 401;
+            res.send({message: `You are not a(n) manager, you are a(n) ${payload.role}`})
+        }
+    } catch(err) {
+        console.error(err);
+        res.statusCode = 401;
+        res.send({message: "Failed to Authenticate Token"})
+    }
+
+})
+
+server.get('/pending-tickets', async (req, res) => {
+    const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
+    try {
+        const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
+        if(payload.role === 'manager'){
+            const pendingTickets = await ticketDao.getPendingTickets();
+            res.send(pendingTickets.Items);
+        }else{
+            res.statusCode = 401;
+            res.send({message: `You are not a(n) manager, you are a(n) ${payload.role}`})
+        }
+    } catch(err) {
+        console.error(err);
+        res.statusCode = 401;
+        res.send({message: "Failed to Authenticate Token"})
+    }
+})
+
+server.get('/tickets', async (req,res) => {
+    const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
+    try {
+        const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
+        if(payload.role === 'employee'){
+            const list = await ticketDao.getTicketsByUser(payload.username);
+            res.send(list.Items);
+        }else{
+            res.statusCode = 401;
+            res.send({message: `You are not a(n) manager, you are a(n) ${payload.role}`})
+        }
+    } catch(err) {
+        console.error(err);
+        res.statusCode = 401;
+        res.send({message: "Failed to Authenticate Token"})
+    }
+})
 
 server.listen(PORT, () => {
     console.log(`Server is listening on ${PORT}`);
