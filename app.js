@@ -38,20 +38,18 @@ server.post('/register',validateCredFields, async(req,res) => {
         const { username, password } = body;
         const results = await userDao.checkUser(username);
         if(results.Items.length > 0) {
-            res.send('Username already used.');
+            res.statusCode = 400;
+            res.send({message:'Username already exists, please choose another.'});
         } else {
             const newUser = new User(username,password);
             userDao.addUser(newUser)
                 .then((data) => {
-                    res.send({
-                        message: "Successfully Registered!"
-                    })
+                    res.statusCode = 201;
+                    res.send({message: "Successfully registered!"})
                 })
                 .catch((err) => {
-                    console.log(err);
-                    res.send({
-                        message: "Failed to register!"
-                    })
+                    res.statusCode = 400;
+                    res.send({message: "Failed to register!"})
                 })
         }
     }
@@ -66,16 +64,18 @@ server.post('/login',validateCredFields, async(req,res) => {
             const retrievedUser = results.Items[0];
             if(retrievedUser.password === password) {
                 const token = jwtUtil.createJWT(retrievedUser.username, retrievedUser.role);
+                res.statusCode = 202;
                 res.send({
-                    message:  `Successfully Authenticated. Welcome ${retrievedUser.username}`,
+                    message:  `Successfully authenticated. Welcome ${retrievedUser.username}`,
                     token: token
                 })
             } else {
                 res.statusCode = 400;
-                res.send({message: "Invalid Credentials"});
+                res.send({message: "Incorrect password."});
             }
         } else {
-            res.send({message: "Username Does Not Exist."});
+            res.statusCode = 400;
+            res.send({message: "Account does not exist."});
         }
     }
 })
@@ -92,13 +92,13 @@ server.post('/submitTicket',validateTicketFields, async(req,res) => {
                 ticketDao.addTicket(newTicket)
                     .then((data) => {
                         res.send({
-                            message: `Successfully Added Ticket By ${payload.username}`
+                            message: `Successfully submitted ticket by ${payload.username}`
                         })
                     })
                     .catch((err) => {
                         console.log(err);
                         res.send({
-                            message: "Failed to Add Ticket!"
+                            message: "Failed to submit ticket."
                         })
                     })
             }else{
@@ -112,9 +112,12 @@ server.post('/submitTicket',validateTicketFields, async(req,res) => {
             console.error(err);
             res.statusCode = 401;
             res.send({
-                message: "Failed to Authenticate Token"
-            })
+                message: "Failed to authenticate token"
+            });
         })
+    } else {
+        res.statusCode = 400;
+        res.send({message: "Please provide the ticket with both an amount and a description."});
     }
 })
 
@@ -134,11 +137,12 @@ server.patch('/process/:ticketId', async (req, res) => {
                 res.send({message: 'Ticket has already been processed'});
             } else {
                 await ticketDao.processTicket(ticket_id, newStatus);
+                res.statusCode = 202;
                 res.send({message: `Ticket ID: ${ticket_id} has been ${newStatus}`});
             }
         }else{
-            res.statusCode = 401;
-            res.send({message: `You are not a(n) manager, you are a(n) ${payload.role}`})
+            res.statusCode = 403;
+            res.send({message: `You are not a manager, you are an ${payload.role}`})
         }
     } catch(err) {
         console.error(err);
@@ -157,7 +161,7 @@ server.get('/pending-tickets', async (req, res) => {
             res.send(pendingTickets.Items);
         }else{
             res.statusCode = 401;
-            res.send({message: `You are not a(n) manager, you are a(n) ${payload.role}`})
+            res.send({message: `You are not a manager, you are an ${payload.role}`})
         }
     } catch(err) {
         console.error(err);
@@ -175,7 +179,7 @@ server.get('/tickets', async (req,res) => {
             res.send(list.Items);
         }else{
             res.statusCode = 401;
-            res.send({message: `You are not a(n) manager, you are a(n) ${payload.role}`})
+            res.send({message: `You are not an employee, you are a ${payload.role}`})
         }
     } catch(err) {
         console.error(err);

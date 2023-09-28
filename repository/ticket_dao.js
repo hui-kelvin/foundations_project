@@ -51,16 +51,17 @@ function processTicket(id, newStatus) {
 function getPendingTickets() {
     const params = {
         TableName: 'tickets',
-        FilterExpression: '#c = :value',
+        IndexName: 'status-index',
+        KeyConditionExpression: '#status = :value',
         ExpressionAttributeNames: {
-            '#c': 'status'
+            '#status': 'status'
         },
         ExpressionAttributeValues: {
             ':value': "Pending"
         }
     };
 
-    return docClient.scan(params).promise();
+    return docClient.query(params).promise();
 }
 
 function getTicketsByUser(username) {
