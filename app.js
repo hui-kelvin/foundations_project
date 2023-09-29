@@ -91,7 +91,7 @@ server.post('/submitTicket',validateTicketFields, async(req,res) => {
                 const newTicket = new Ticket(payload.username,amount,description);
                 try {
                     const result = await ticketDao.addTicket(newTicket)
-                    res.send({message: `Successfully submitted ticket by ${payload.username}`})
+                    res.send({message: `Successfully submitted ticket: ${newTicket.ticket_id} by ${payload.username}`})
                 }catch{
                     res.statusCode = 400;
                     res.send({message: "Failed to submit ticket."})
@@ -140,13 +140,19 @@ server.put('/process/:ticketId', async (req, res) => {
 
 })
 
-server.get('/pending-tickets', async (req, res) => {
+server.get('/tickets', async (req, res) => {
+    const { status } = req.query;
     const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
     try {
         const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
         if(payload.role === 'manager'){
-            const pendingTickets = await ticketDao.getPendingTickets();
-            res.send(pendingTickets.Items);
+            if(!status) {
+                const result = await ticketDao.getTickets("Pending");
+                res.send(result.Items);
+            } else {
+                const result = await ticketDao.getTickets(status);
+                res.send(result.Items);
+            }
         }else{
             res.statusCode = 401;
             res.send({message: `You are not a manager, you are an ${payload.role}`})
@@ -158,7 +164,7 @@ server.get('/pending-tickets', async (req, res) => {
     }
 })
 
-server.get('/tickets', async (req,res) => {
+server.get('/past-tickets', async (req,res) => {
     const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
     try {
         const payload = await jwtUtil.verifyTokenAndReturnPayload(token)

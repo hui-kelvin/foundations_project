@@ -47,7 +47,7 @@ function processTicket(id, newStatus) {
     return docClient.update(params).promise();
 }
 
-function getPendingTickets() {
+function getTickets(status) {
     const params = {
         TableName: 'tickets',
         IndexName: 'status-index',
@@ -56,7 +56,7 @@ function getPendingTickets() {
             '#status': 'status'
         },
         ExpressionAttributeValues: {
-            ':value': "Pending"
+            ':value': status
         }
     };
 
@@ -74,4 +74,4 @@ function getTicketsByUser(username) {
 
     return docClient.scan(params).promise();
 }
-module.exports = { addTicket, checkProcessed, processTicket, getPendingTickets, getTicketsByUser };
+module.exports = { addTicket, checkProcessed, processTicket, getTickets, getTicketsByUser };
