@@ -92,14 +92,4 @@ function updateById(id,newRole) {
     }
 }
 
-// Delete
-function deleteById(id) {
-    const params = {
-        TableName: 'users',
-        Key: {
-            id
-        }
-    }
-}
-
 module.exports = { checkUser, addUser, retrieveList, retrieveListByCat, updateById};

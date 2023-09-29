@@ -66,7 +66,7 @@ server.post('/login',validateCredFields, async(req,res) => {
                 const token = jwtUtil.createJWT(retrievedUser.username, retrievedUser.role);
                 res.statusCode = 202;
                 res.send({
-                    message:  `Successfully authenticated. Welcome ${retrievedUser.username}`,
+                    message:  `Successfully authenticated. Welcome ${retrievedUser.role}: ${retrievedUser.username}`,
                     token: token
                 })
             } else {
@@ -87,10 +87,11 @@ server.post('/submitTicket',validateTicketFields, async(req,res) => {
         const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
         try {
             const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
-            if(payload.role === 'employee'){
+            if(payload.role === 'employee' || payload.role === 'manager'){
                 const newTicket = new Ticket(payload.username,amount,description);
                 try {
                     const result = await ticketDao.addTicket(newTicket)
+                    res.statusCode = 201;
                     res.send({message: `Successfully submitted ticket: ${newTicket.ticket_id} by ${payload.username}`})
                 }catch{
                     res.statusCode = 400;
@@ -99,7 +100,7 @@ server.post('/submitTicket',validateTicketFields, async(req,res) => {
             }else{
                 res.statusCode = 401;
                 res.send({
-                    message: `You are not an employee, you are a ${payload.role}`
+                    message: `You are not an employee or a manager`
                 })
             }
         }catch{
@@ -119,14 +120,21 @@ server.put('/process/:ticketId', async (req, res) => {
     try {
         const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
         if(payload.role === 'manager'){
-            const ifProcessed = await ticketDao.checkProcessed(ticket_id);
-            if(ifProcessed) {
+            const retrieved = await ticketDao.getTicket(ticket_id);
+            const retrievedStatus = retrieved.Item.status;
+            //const ifProcessed = await ticketDao.checkProcessed(ticket_id);
+            if(retrievedStatus === "Approved" || retrievedStatus == "Denied") {
                 res.statusCode = 400;
                 res.send({message: 'Ticket has already been processed'});
             } else {
+                if(payload.username === retrieved.Item.creator) {
+                    res.statusCode = 401;
+                    res.send({message: "Cannot process your own ticket."})
+                } else {
                 await ticketDao.processTicket(ticket_id, newStatus);
                 res.statusCode = 202;
                 res.send({message: `Ticket ID: ${ticket_id} has been ${newStatus}`});
+                }
             }
         }else{
             res.statusCode = 403;

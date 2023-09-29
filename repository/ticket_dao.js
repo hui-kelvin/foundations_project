@@ -14,7 +14,7 @@ function addTicket(ticket) {
     return docClient.put(params).promise(); //put is docClient's version of create()
 }
 
-async function checkProcessed(ticket_id){
+async function getTicket(ticket_id){
     const params = {
         TableName: 'tickets',
         Key: {
@@ -23,10 +23,11 @@ async function checkProcessed(ticket_id){
     };
 
     const retrieved = await docClient.get(params).promise();
-    if(retrieved.Item.status !== "Pending") {
-        return true;
-    }
-    return false;
+    return retrieved;
+    // if(retrieved.Item.status !== "Pending") {
+    //     return true;
+    // }
+    // return false;
 
 }
 
@@ -74,4 +75,4 @@ function getTicketsByUser(username) {
 
     return docClient.scan(params).promise();
 }
-module.exports = { addTicket, checkProcessed, processTicket, getTickets, getTicketsByUser };
+module.exports = { addTicket, getTicket, processTicket, getTickets, getTicketsByUser };
