@@ -23,7 +23,6 @@ async function checkProcessed(ticket_id){
     };
 
     const retrieved = await docClient.get(params).promise();
-    //console.log(retrieved);
     if(retrieved.Item.status !== "Pending") {
         return true;
     }

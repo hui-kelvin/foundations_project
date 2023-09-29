@@ -85,53 +85,41 @@ server.post('/submitTicket',validateTicketFields, async(req,res) => {
     if(body.valid) {
         const { amount, description } = body;
         const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
-        jwtUtil.verifyTokenAndReturnPayload(token)
-        .then((payload) => {
+        try {
+            const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
             if(payload.role === 'employee'){
                 const newTicket = new Ticket(payload.username,amount,description);
-                ticketDao.addTicket(newTicket)
-                    .then((data) => {
-                        res.send({
-                            message: `Successfully submitted ticket by ${payload.username}`
-                        })
-                    })
-                    .catch((err) => {
-                        console.log(err);
-                        res.send({
-                            message: "Failed to submit ticket."
-                        })
-                    })
+                try {
+                    const result = await ticketDao.addTicket(newTicket)
+                    res.send({message: `Successfully submitted ticket by ${payload.username}`})
+                }catch{
+                    res.statusCode = 400;
+                    res.send({message: "Failed to submit ticket."})
+                }
             }else{
                 res.statusCode = 401;
                 res.send({
                     message: `You are not an employee, you are a ${payload.role}`
                 })
             }
-        })
-        .catch((err) => {
-            console.error(err);
+        }catch{
             res.statusCode = 401;
-            res.send({
-                message: "Failed to authenticate token"
-            });
-        })
+            res.send({message: "Failed to authenticate token"});
+        }
     } else {
         res.statusCode = 400;
         res.send({message: "Please provide the ticket with both an amount and a description."});
     }
 })
 
-server.patch('/process/:ticketId', async (req, res) => {
+server.put('/process/:ticketId', async (req, res) => {
     const ticket_id = req.params.ticketId;
-    //console.log(ticket_id);
     const newStatus = (req.body.newStatus);
-    //console.log(newStatus)
     const token = req.headers.authorization.split(' ')[1]; // ['Bearer', '<token>'];
-    const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
     try {
+        const payload = await jwtUtil.verifyTokenAndReturnPayload(token)
         if(payload.role === 'manager'){
             const ifProcessed = await ticketDao.checkProcessed(ticket_id);
-            //console.log(ifProcessed)
             if(ifProcessed) {
                 res.statusCode = 400;
                 res.send({message: 'Ticket has already been processed'});
